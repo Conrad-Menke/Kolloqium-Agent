@@ -40,47 +40,88 @@ passages a retrieval step returns.
 │       └── index/                  # Chroma DB (gitignored)
 ```
 
-## Install
+## Quickstart
 
-1. Clone and (optionally) install dependencies ahead of time. The skill will
-   also do this on first activation:
+Von null bis zur ersten Kolloquiumssession in fünf Schritten.
 
-   ```bash
-   cd skills/kolloquium/scripts
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
+### 1. opencode installieren
 
-2. Activate the skill in opencode. Either:
+Ein Befehl lädt die neueste Version herunter und installiert sie:
 
-   - Symlink the skill into your opencode config dir:
+```bash
+curl -fsSL https://opencode.ai/install | bash
+```
 
-     ```bash
-     ln -s "$(pwd)/skills/kolloquium" \
-           "$HOME/.config/opencode/skills/kolloquium"
-     ```
+Danach `opencode` im Terminal aufrufen können. Auf macOS alternativ
+`brew install opencode`, auf Arch `paru -S opencode`. Details siehe
+<https://opencode.ai/docs>.
 
-   - Or run opencode from the repo root and reference the skill path directly.
+### 2. Repo klonen
 
-## Running a Kolloquium
+```bash
+git clone https://github.com/Conrad-Menke/Kolloqium-Agent.git
+cd Kolloqium-Agent
+```
 
-Start a session with any trigger phrase, e.g.:
+### 3. Skill in opencode bekannt machen
+
+Entweder per Symlink in das opencode-Konfigurationsverzeichnis (empfohlen,
+danach ist der Skill in jedem Projekt verfügbar):
+
+```bash
+ln -s "$(pwd)/skills/kolloquium" \
+      "$HOME/.config/opencode/skills/kolloquium"
+```
+
+…oder opencode einfach aus dem Repo-Root heraus starten — dann wird der
+Skill über seinen relativen Pfad gefunden.
+
+### 4. Erste Session starten
+
+```bash
+opencode
+```
+
+Im Chat den Skill mit einer Trigger-Phrase aktivieren, z. B.:
 
 > "Führe ein Kolloquium mit mir."
 
-The skill then runs an **activation round**:
+### 5. Mode wählen
 
-1. Asks for the folder or PDF file(s) to load (recursive for folders).
-2. Verifies / creates the venv and installs requirements (first time only).
-3. Indexes every PDF found into the local Chroma store and reports counts.
-4. Asks **which mode** (A — Simulation, B — Karteikarten, C — Aufbau) plus
-   mode-specific setup (Kurzvortrag topic / number of cards + output format /
-   target use case to adapt for).
-5. Begins the chosen mode.
+Der Skill läuft dann eine **Aktivierungsrunde**:
 
-Continuation: re-activating with "weiter" / "continue" resumes without
-re-indexing.
+1. Fragt nach dem Ordner oder den PDF-/DOCX-Dateien (Ordner werden rekursiv
+   durchsucht).
+2. Legt ein Python-Venv an und installiert die Abhängigkeiten (nur beim
+   ersten Mal).
+3. Indiziert alle gefundenen Dateien in den lokalen Chroma-Store und
+   meldet die Anzahl.
+4. Fragt **welcher Modus** (A — Simulation, B — Karteikarten, C — Aufbau)
+   plus modusspezifisches Setup.
+5. Startet den gewählten Modus.
+
+### Optional: Abhängigkeiten vorab installieren
+
+Wer nicht warten will, bis die Aktivierungsrunde das Venv anlegt, kann es
+auch von Hand machen (die Aktivierungsrunde überspringt diesen Schritt
+dann):
+
+```bash
+cd skills/kolloquium/scripts
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+## Running a Kolloquium
+
+Nach der Aktivierungsrunde (siehe Quickstart Schritt 5) läuft der gewählte
+Modus. Was in der Session passiert, steckt in `skills/kolloquium/SKILL.md`:
+Mode A führt ein fließendes Gespräch, Mode B erzeugt Karteikarten im
+gewünschten Format, Mode C erklärt und adaptiert den Agenten.
+
+Fortsetzen: mit "weiter" / "continue" ohne Neu-Indizierung in dieselbe
+Session zurückkehren. Abbrechen: "stop" / "exit exam" / "ich will aufhören".
 
 ## How grounding works
 
