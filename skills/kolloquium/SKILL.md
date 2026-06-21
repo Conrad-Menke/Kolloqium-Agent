@@ -1,3 +1,16 @@
+---
+name: kolloquium
+description: >
+  NRW-Kolloquium oral-exam coach + flashcard generator. Grounded RAG over a local
+  PDF/DOCX corpus (Chroma + sentence-transformers). Three modes: (A) simulation
+  of the mündliche Prüfung, (B) Karteikarten/Fragenkatalog, (C) build-your-own
+  tutor walkthrough.
+  Use when the user says "Kolloquium", "mündliche Prüfung", "oral exam",
+  "Karteikarten", "Fragenkatalog", "quiz me on the PDFs", or
+  "examine me on the material". Deactivate on "stop", "exit exam",
+  or "ich will aufhören".
+---
+
 # Skill: kolloquium
 
 Prüfungs-Coach + Karteikarten-Generator für das **NRW-Kolloquium** (mündliche
