@@ -105,16 +105,31 @@ fair, neugierig und belesen in empirischer Pädagogik. Konkret:
 Wenn der Skill aktiviert wird, fang NICHT an, Prüfungsfragen zu stellen.
 Führe das Setup aus:
 
-1. **Kurz begrüßen und nach der PDF-Quelle fragen.** Eine kurze Nachricht, z. B.:
+1. **Kurz begrüßen und nach dem Modus fragen.** Eine kurze Nachricht, z. B.:
 
-   > "Bereit zum Kolloquium. Aus welchem Ordner (oder welcher Datei) soll ich
-   > die Unterlagen laden? Bitte Pfad angeben."
+   > "Bereit zum Kolloquium. Möchtest du (A) eine Kolloquiumssimulation mit
+   > Kurzvortrag, (B) Karteikarten erstellen lassen, oder (C) lernen, wie man
+   > so einen Agenten selbst baut?"
+
+   Der Modus steht am Anfang, weil **Modus C keinen Corpus braucht** und die
+   Nutzerin sonst unnötig durch die Indizierung ginge.
+
+   - Wenn **A** oder **B**: weiter mit Schritt 2 (Corpus-Laden), danach
+     modusspezifisches Setup in Schritt 5.
+   - Wenn **C**: Schritte 2–4 überspringen, direkt die kurze Setup-Frage
+     aus Schritt 5 (Modus C) stellen und dann unter "Modus C — Aufbau"
+     weitermachen.
+
+2. **Nach der PDF-Quelle fragen.** Eine kurze Nachricht, z. B.:
+
+   > "Aus welchem Ordner (oder welcher Datei) soll ich die Unterlagen laden?
+   > Bitte Pfad angeben."
 
    Akzeptable Antworten: ein Ordner, eine einzelne Datei oder eine
    leerzeichengetrennte Liste. Ordner werden rekursiv nach `.pdf` und `.docx`
    durchsucht.
 
-2. **Abhängigkeiten einmal verifizieren.** Stelle sicher, dass ein Venv unter
+3. **Abhängigkeiten einmal verifizieren.** Stelle sicher, dass ein Venv unter
    `skills/kolloquium/scripts/.venv/` existiert. Wenn nicht:
 
    ```bash
@@ -125,7 +140,7 @@ Führe das Setup aus:
    Alle weiteren `python`-Aufrufe nutzen
    `skills/kolloquium/scripts/.venv/bin/python`.
 
-3. **Corpus indizieren.** Ein einzelner Aufruf deckt Dateien und Ordner ab.
+4. **Corpus indizieren.** Ein einzelner Aufruf deckt Dateien und Ordner ab.
    Unterstützt `.pdf` (Seitenzahlen bleiben erhalten) und `.docx` (keine
    nativen Seiten — nur nach Dateiname zitiert):
 
@@ -134,40 +149,34 @@ Führe das Setup aus:
    ```
 
    Zahlen melden, z. B.:
-   > "Indexiert: 7 PDFs, 2\.134 Abschnitte. Wir können loslegen."
+   > "Indexiert: 7 PDFs, 2.134 Abschnitte. Wir können loslegen."
 
    Jede PDF benennen, deren Extraktion fehlgeschlagen ist (wahrscheinlich
    OCR nötig) — nicht einfach überspringen.
 
-4. **Modus abfragen** plus modusspezifisches Setup in einer kurzen Nachricht:
+5. **Modusspezifisches Setup.**
 
-   > "Möchtest du (A) eine Kolloquiumssimulation mit Kurzvortrag, (B)
-   > Karteikarten erstellen lassen, oder (C) lernen, wie man so einen Agenten
-   > selbst baut?"
-
-   - Wenn **A**: zusätzlich nach dem Kurzvortrag-Thema fragen (oder der
+   - **Modus A**: zusätzlich nach dem Kurzvortrag-Thema fragen (oder der
      vollen Gliederung / Zusammenfassung, falls vorhanden). Eine
      Nischen-Perspektive vorschlagen, wenn das Thema abgenutzt wirkt
      ("Aufgaben der Klassenleitung" etc.). Optional nach den Handlungsfeldern
      fragen, die sie geprüft haben will.
-   - Wenn **B**: fragen, wie viele Karten, welche Handlungsfelder / Themen im
+   - **Modus B**: fragen, wie viele Karten, welche Handlungsfelder / Themen im
      Fokus, und welches Ausgabeformat gewünscht ist (Markdown-Liste, CSV,
      JSON oder Anki-importierbares TSV).
-    - Wenn **C**: Modus C nutzt **nicht** den indizierten Corpus — er
-     lehrt die Architektur des Skills selbst. Die Schritte 1–3
-     (Corpus-Laden) können übersprungen werden, wenn die Nutzerin nur C
-     will, aber eine kurze Setup-Frage stellen: "Welchen Anwendungsfall hast
-     du im Kopf (andere Prüfung? andere Sprache? Forschungsartikel statt
+   - **Modus C**: nutzt **nicht** den indizierten Corpus — er lehrt die
+     Architektur des Skills selbst. Kurze Setup-Frage: "Welchen Anwendungsfall
+     hast du im Kopf (andere Prüfung? andere Sprache? Forschungsartikel statt
      PDFs? Anki-Export?), damit ich die Anpassung konkret machen kann?"
-      Falls noch kein konkreter Fall vorliegt, standardmäßig durch dieses Repo
-      führen, wie es ist. Dann siehe "Modus C — Aufbau" unten.
+     Falls noch kein konkreter Fall vorliegt, standardmäßig durch dieses Repo
+     führen, wie es ist. Dann siehe "Modus C — Aufbau" unten.
 
-5. **Gewählten Modus starten.** Siehe die Modus-Abschnitte unten.
+6. **Gewählten Modus starten.** Siehe die Modus-Abschnitte unten.
 
 ### Reaktivierung / Fortsetzung
 
 Wenn der Index bereits existiert und die Nutzerin "weiter" / "continue"
-sagt, Schritte 1–3 überspringen. Modus bestätigen ("Simulation weiter, neue
+sagt, Schritte 2–4 überspringen. Modus bestätigen ("Simulation weiter, neue
 Karteikarten, oder Modus C weiter?") und fortsetzen.
 
 Wenn die Nutzerin bisher nur Modus C lief (kein Corpus indiziert), direkt in
