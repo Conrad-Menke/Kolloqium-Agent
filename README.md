@@ -1,43 +1,46 @@
 # Kolloqium-Agent
 
-An opencode skill that turns a corpus of PDFs into an **NRW Kolloquium** coach.
-Built for the second-state exam (`Vorbereitungsdienst` / `Referendariat`).
+Ein opencode-Skill, der einen Corpus an PDFs in einen **NRW-Kolloquiums-Coach**
+verwandelt. Gebaut für die Zweite Staatsprüfung (`Vorbereitungsdienst` /
+`Referendariat`).
 
-The skill runs in three modes:
+Der Skill läuft in drei Modi:
 
-- **Mode A — Simulation**: a dynamic examiner conversation calibrated to the
-  real NRW format. You open with a self-chosen *Kurzvortrag*; the agent picks
-  up the "lose Enden" you leave and develops a flowing conversation across the
-  Handlungsfelder, weaving empirical grounding with practical experience.
-- **Mode B — Karteikarten**: produces study flashcards. Each card has a
-  fictional examiner question, 3–5 answer keywords, and the exact source
-  passage from your PDFs.
-- **Mode C — Aufbau (Build-your-own tutor)**: the agent switches hats from
-  examiner → coach/mentor and walks you through how this skill was built and
-  how to fork it for your own use case (other exam format, other language,
-  research papers instead of PDFs, Anki export, …). Mode C reads this repo's
-  actual files rather than reciting from memory.
+- **Modus A — Simulation**: ein dynamisches Prüfungsgespräch im echten NRW-Format.
+  Du eröffnest mit einem selbst gewählten *Kurzvortrag*; der Agent greift die
+  "losen Enden" auf, die du liegen lässt, und entwickelt ein fließendes Gespräch
+  über die Handlungsfelder, in dem empirische Fundierung mit eigener Erfahrung
+  verwoben wird.
+- **Modus B — Karteikarten**: erzeugt Lernkarten. Jede Karte hat eine fiktive
+  Prüfungsfrage, 3–5 Antwort-Schlagworte und die exakte Quellenstelle aus den
+  PDFs.
+- **Modus C — Aufbau (Build-your-own tutor)**: der Agent wechselt die Rolle vom
+  Prüfer zum Coach/Mentor und führt dich durch den Aufbau dieses Skills und
+  zeigt, wie du ihn für deinen eigenen Anwendungsfall forken kannst (anderes
+  Prüfungsformat, andere Sprache, Forschungsartikel statt PDFs, Anki-Export,
+  …). Modus C liest die tatsächlichen Dateien dieses Repos statt aus dem
+  Gedächtnis zu zitieren.
 
-Every question and every card is **anchored in retrieved passages**. If the
-corpus does not support a question, the agent says so instead of inventing one.
-This skill enforces grounding by giving the agent access to **only** the
-passages a retrieval step returns.
+Jede Frage und jede Karte ist **in abgerufenen Textstellen verankert**. Wenn
+der Corpus eine Frage nicht hergibt, sagt der Agent das auch, statt etwas zu
+erfinden. Grounding wird dadurch erzwungen, dass der Agent **nur** auf die
+Passagen Zugriff hat, die ein Retrieval-Schritt zurückliefert.
 
 ## Layout
 
 ```
 .
-├── AGENTS.md                       # Agent instructions (repo-level)
-├── opencode.json                   # opencode config + permission rules
+├── AGENTS.md                       # Agent-Anweisungen (Repo-Ebene)
+├── opencode.json                   # opencode-Konfiguration + Berechtigungsregeln
 ├── skills/
 │   └── kolloquium/
-│       ├── SKILL.md                # The examiner skill (persona + rules)
+│       ├── SKILL.md                # Der Prüfer-Skill (Persona + Regeln)
 │       ├── scripts/
-│       │   ├── index_corpus.py     # Parse + chunk + embed PDF/DOCX → Chroma
-│       │   ├── retrieve.py         # Query → JSON passages
+│       │   ├── index_corpus.py     # PDF/DOCX parsen + chunken + embedden → Chroma
+│       │   ├── retrieve.py         # Query → JSON-Passagen
 │       │   └── requirements.txt
-│       ├── data/                   # PDFs/DOCX land here (gitignored)
-│       └── index/                  # Chroma DB (gitignored)
+│       ├── data/                   # PDFs/DOCX landen hier (gitignored)
+│       └── index/                  # Chroma-DB (gitignored)
 ```
 
 ## Quickstart
@@ -86,7 +89,7 @@ Im Chat den Skill mit einer Trigger-Phrase aktivieren, z. B.:
 
 > "Führe ein Kolloquium mit mir."
 
-### 5. Mode wählen
+### 5. Modus wählen
 
 Der Skill läuft dann eine **Aktivierungsrunde**:
 
@@ -113,32 +116,32 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Running a Kolloquium
+## Kolloquium durchführen
 
 Nach der Aktivierungsrunde (siehe Quickstart Schritt 5) läuft der gewählte
 Modus. Was in der Session passiert, steckt in `skills/kolloquium/SKILL.md`:
-Mode A führt ein fließendes Gespräch, Mode B erzeugt Karteikarten im
-gewünschten Format, Mode C erklärt und adaptiert den Agenten.
+Modus A führt ein fließendes Gespräch, Modus B erzeugt Karteikarten im
+gewünschten Format, Modus C erklärt und adaptiert den Agenten.
 
 Fortsetzen: mit "weiter" / "continue" ohne Neu-Indizierung in dieselbe
 Session zurückkehren. Abbrechen: "stop" / "exit exam" / "ich will aufhören".
 
-## How grounding works
+## Wie das Grounding funktioniert
 
-Each turn, before asking anything, the agent runs:
+Vor jeder Frage läuft pro Zug:
 
 ```bash
-python retrieve.py "<concept>" --k 5
+python retrieve.py "<konzept>" --k 5
 ```
 
-The returned JSON (`page`, `source`, `text`, `score`) is the closed universe
-for that question. If no passage scores above the grounding threshold, the
-agent refuses to fabricate a question and says so. Full rules in
-`skills/kolloquium/SKILL.md`.
+Das zurückgegebene JSON (`page`, `source`, `text`, `score`) ist das
+abgeschlossene Universum für diese Frage. Wenn keine Passage die
+Grounding-Schwelle erreicht, weigert sich der Agent, eine Frage zu erfinden,
+und sagt das auch. Vollständige Regeln in `skills/kolloquium/SKILL.md`.
 
 ## Status
 
-Skeleton scaffolded — index and retrieval scripts are functional Python. The
-examiner persona lives entirely in the SKILL.md prompt. No server, no daemon,
-no external API key required (embeddings run locally via
-`sentence-transformers`; the LLM is whatever opencode is already using).
+Gerüst steht — Index- und Retrieval-Skripte sind funktionierendes Python. Die
+Prüfer-Persona lebt vollständig im SKILL.md-Prompt. Kein Server, kein Daemon,
+kein externer API-Key nötig (Embeddings laufen lokal über
+`sentence-transformers`; das LLM ist, was auch immer opencode ohnehin nutzt).

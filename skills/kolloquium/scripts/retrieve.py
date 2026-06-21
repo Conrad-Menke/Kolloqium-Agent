@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Retrieve the most relevant PDF passages for a query.
+"""Die relevantesten PDF-Passagen für eine Query abrufen.
 
-Returns JSON to stdout so the opencode agent can consume it deterministically.
+Gibt JSON auf stdout zurück, damit der opencode-Agent es determiniert
+konsumieren kann.
 
-Usage:
-    python retrieve.py "<query>" [--index-dir DIR] [--k N] [--pdf NAME]
+Aufruf:
+    python retrieve.py "<query>" [--index-dir VERZ] [--k N] [--pdf NAME]
 
-Output (JSON array):
+Ausgabe (JSON-Array):
     [
       {
         "page": 12,
@@ -17,10 +18,10 @@ Output (JSON array):
       ...
     ]
 
-Exit codes:
-    0  success (may have zero results)
-    1  query empty
-    2  index not found / empty
+Exit-Codes:
+    0  Erfolg (kann null Ergebnisse haben)
+    1  Query leer
+    2  Index nicht gefunden / leer
 """
 from __future__ import annotations
 
@@ -40,32 +41,32 @@ EMBED_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("query", type=str, help="Search query")
+    p.add_argument("query", type=str, help="Suchanfrage")
     p.add_argument("--index-dir", type=Path, default=DEFAULT_INDEX_DIR)
-    p.add_argument("--k", type=int, default=5, help="Top-k passages to return")
-    p.add_argument("--pdf", type=str, default=None, help="Restrict to one source PDF filename")
+    p.add_argument("--k", type=int, default=5, help="Top-k Passagen zurückgeben")
+    p.add_argument("--pdf", type=str, default=None, help="Auf einen Quell-PDF-Dateinamen einschränken")
     return p.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     if not args.query.strip():
-        print(json.dumps({"error": "empty query"}))
+        print(json.dumps({"error": "leere Query"}))
         return 1
 
     if not args.index_dir.exists():
-        print(json.dumps({"error": f"index dir not found: {args.index_dir}. Run index_pdf.py first."}))
+        print(json.dumps({"error": f"Index-Verzeichnis nicht gefunden: {args.index_dir}. Zuerst index_corpus.py ausführen."}))
         return 2
 
     client = chromadb.PersistentClient(path=str(args.index_dir))
     try:
         collection = client.get_collection(name=COLLECTION_NAME)
     except Exception:
-        print(json.dumps({"error": f"collection '{COLLECTION_NAME}' not found. Run index_pdf.py first."}))
+        print(json.dumps({"error": f"Collection '{COLLECTION_NAME}' nicht gefunden. Zuerst index_corpus.py ausführen."}))
         return 2
 
     if collection.count() == 0:
-        print(json.dumps({"error": "index is empty"}))
+        print(json.dumps({"error": "Index ist leer"}))
         return 2
 
     embedder = SentenceTransformer(EMBED_MODEL)
@@ -82,7 +83,7 @@ def main() -> int:
     docs = res["documents"][0]
     metas = res["metadatas"][0]
     dists = res["distances"][0]
-    # chroma returns squared L2 distance; convert to similarity in [0,1]
+    # Chroma liefert quadrierte L2-Distanz; in Ähnlichkeit in [0,1] umrechnen
     out = []
     for doc, meta, dist in zip(docs, metas, dists):
         sim = max(0.0, 1.0 - dist / 2.0)

@@ -1,43 +1,50 @@
-# Agent Instructions
+# Agent-Anweisungen
 
-## Project context
+## Projektkontext
 
-`Kolloqium-Agent`: opencode skill that turns a corpus of PDFs into a
-conversational oral examiner. Lives in `skills/kolloquium/`. Read
-`skills/kolloquium/SKILL.md` first when working on the examiner behavior.
+`Kolloqium-Agent`: opencode-Skill, der einen Corpus an PDFs in einen
+gesprächsorientierten mündlichen Prüfer verwandelt. Lebt in
+`skills/kolloquium/`. `skills/kolloquium/SKILL.md` zuerst lesen, wenn am
+Prüfer-Verhalten gearbeitet wird.
 
-## Working directory
+## Arbeitsverzeichnis
 
-Repo root is the working directory. Keep paths relative to root.
+Repo-Root ist das Arbeitsverzeichnis. Pfade relativ zum Root halten.
 
-## Conventions
+## Konventionen
 
-- One logical change per commit.
-- Do not commit secrets, tokens, API keys, `.env`, PDFs, DOCX, or the Chroma index.
-- Python code targets 3.10+ (uses PEP 604 unions, `from __future__ import annotations`).
-- Run `python -m py_compile` on changed `.py` files before committing if no
-  test suite exists yet.
+- Eine logische Änderung pro Commit.
+- Keine Secrets, Tokens, API-Keys, `.env`, PDFs, DOCX oder den Chroma-Index
+  committen.
+- Python-Code zielt auf 3.10+ (nutzt PEP-604-Unions,
+  `from __future__ import annotations`).
+- `python -m py_compile` auf geänderten `.py`-Dateien ausführen, bevor
+  committet wird, falls noch keine Test-Suite existiert.
 
-## Skill scripts
+## Skill-Skripte
 
-| Script | Purpose | Read-only? |
-|--------|---------|-----------|
-| `skills/kolloquium/scripts/index_corpus.py` | Parse + chunk + embed PDF/DOCX into Chroma | Writes to `index/` |
-| `skills/kolloquium/scripts/retrieve.py` | Query Chroma → JSON passages | Read-only |
+| Skript | Zweck | Read-only? |
+|--------|-------|-----------|
+| `skills/kolloquium/scripts/index_corpus.py` | PDF/DOCX parsen + chunken + embedden in Chroma | Schreibt nach `index/` |
+| `skills/kolloquium/scripts/retrieve.py` | Chroma abfragen → JSON-Passagen | Read-only |
 
-Both scripts must remain **deterministic and side-effect-free apart from the
-index dir**. The agent relies on them returning predictable JSON.
+Beide Skripte müssen **determiniert und nebenwirkungsfrei abgesehen vom
+Index-Verzeichnis** bleiben. Der Agent verlässt sich darauf, dass sie
+vorhersehbares JSON zurückgeben.
 
-## Grounding rules (critical)
+## Grounding-Regeln (kritisch)
 
-The examiner agent must never ask a question whose content is not supported by
-retrieved passages. When modifying `SKILL.md`, preserve the grounding rules
-verbatim in spirit — they are the whole point of this repo.
+Der Prüfer-Agent darf niemals eine Frage stellen, deren Inhalt nicht durch
+abgerufene Passagen gestützt ist. Bei Änderungen an `SKILL.md` die
+Grounding-Regeln im Geist wortwörtlich erhalten — sie sind der ganze Sinn
+dieses Repos.
 
-## What NOT to do
+## Was NICHT zu tun ist
 
-- Do not add a networked LLM call inside the scripts. The skill calls the LLM
-  via opencode; the scripts only handle parsing + retrieval (PDF + DOCX).
-- Do not store PDFs or the Chroma index in git.
-- Do not force-push or rewrite history unless explicitly asked.
-- Do not install heavy dependencies without confirmation.
+- Keinen netzwerkgestützten LLM-Aufruf innerhalb der Skripte einbauen. Der
+  Skill ruft das LLM über opencode; die Skripte übernehmen nur Parsen +
+  Retrieval (PDF + DOCX).
+- Keine PDFs oder den Chroma-Index in git speichern.
+- Nicht force-pushen oder History umschreiben, außer wenn ausdrücklich
+  darum gebeten.
+- Keine schweren Abhängigkeiten ohne Bestätigung installieren.

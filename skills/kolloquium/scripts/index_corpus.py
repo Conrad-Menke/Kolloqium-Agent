@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
-"""Index PDFs and DOCX files into a local Chroma vector store for retrieval.
+"""PDFs und DOCX-Dateien in einen lokalen Chroma-Vektor-Store indizieren.
 
-Accepts either a single file or a directory (scanned recursively for supported
-formats). Each chunk stores its source file path and page number when
-available, so the examiner agent can cite the exact passage it grounds a
-question on.
+Akzeptiert entweder eine einzelne Datei oder ein Verzeichnis (rekursiv nach
+unterstützten Formaten durchsucht). Jeder Chunk speichert seinen
+Quelldatei-Pfad und seine Seitenzahl (falls verfügbar), damit der
+Prüfer-Agent die exakte Passage zitieren kann, auf der eine Frage fundiert.
 
-Supported formats:
-    .pdf   — page number preserved (1-indexed)
-    .docx  — no native pages; page is None, citation uses filename only
+Unterstützte Formate:
+    .pdf   — Seitenzahl bleibt erhalten (1-indiziert)
+    .docx  — keine nativen Seiten; page ist None, Zitation nur nach Dateiname
 
-Usage:
-    python index_corpus.py <path> [--index-dir DIR] [--chunk-size N] [--overlap N]
+Aufruf:
+    python index_corpus.py <pfad> [--index-dir VERZ] [--chunk-size N] [--overlap N]
 
-<path>  A supported file, or a folder searched recursively for supported files.
+<pfad>  Eine unterstützte Datei oder ein Ordner, der rekursiv nach
+        unterstützten Dateien durchsucht wird.
 
-Output is written to the Chroma collection `kolloquium_passages` inside the
-index directory (default: ../index relative to this script).
+Die Ausgabe wird in die Chroma-Collection `kolloquium_passages` innerhalb des
+Index-Verzeichnisses geschrieben (Default: ../index relativ zu diesem Skript).
 
-Exit codes:
-    0  at least one file indexed (or already up to date)
-    1  path not found / no supported files found
-    2  one or more files had no extractable text
+Exit-Codes:
+    0  mindestens eine Datei indiziert (oder bereits aktuell)
+    1  Pfad nicht gefunden / keine unterstützten Dateien gefunden
+    2  eine oder mehrere Dateien hatten keinen extrahierbaren Text
 """
 from __future__ import annotations
 
@@ -43,22 +44,22 @@ SUPPORTED_EXTS = {".pdf", ".docx"}
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("path", type=Path, help="File or folder to index")
+    p.add_argument("path", type=Path, help="Datei oder Ordner zum Indizieren")
     p.add_argument(
         "--index-dir",
         type=Path,
         default=DEFAULT_INDEX_DIR,
-        help=f"Chroma DB directory (default: {DEFAULT_INDEX_DIR})",
+        help=f"Chroma-DB-Verzeichnis (Default: {DEFAULT_INDEX_DIR})",
     )
-    p.add_argument("--chunk-size", type=int, default=500, help="Chars per chunk")
-    p.add_argument("--overlap", type=int, default=80, help="Overlap between chunks (chars)")
-    p.add_argument("--force", action="store_true", help="Re-index even if file already indexed")
+    p.add_argument("--chunk-size", type=int, default=500, help="Zeichen pro Chunk")
+    p.add_argument("--overlap", type=int, default=80, help="Überlappung zwischen Chunks (Zeichen)")
+    p.add_argument("--force", action="store_true", help="Neu indizieren, auch wenn Datei schon indiziert")
     return p.parse_args()
 
 
 def find_sources(path: Path) -> list[Path]:
-    """Return supported files to index. Accepts a single file or a directory
-    (recursive)."""
+    """Unterstützte Dateien zurückgeben. Akzeptiert eine einzelne Datei oder
+    ein Verzeichnis (rekursiv)."""
     if path.is_file():
         return [path] if path.suffix.lower() in SUPPORTED_EXTS else []
     if path.is_dir():
@@ -67,7 +68,7 @@ def find_sources(path: Path) -> list[Path]:
 
 
 def extract_pages_pdf(pdf_path: Path) -> list[tuple[int, str]]:
-    """Return list of (page_number, text). Page numbers are 1-indexed."""
+    """Liste von (seitenzahl, text) zurückgeben. Seitenzahlen 1-indiziert."""
     reader = PdfReader(str(pdf_path))
     pages: list[tuple[int, str]] = []
     for i, page in enumerate(reader.pages, start=1):
@@ -78,8 +79,8 @@ def extract_pages_pdf(pdf_path: Path) -> list[tuple[int, str]]:
 
 
 def extract_text_docx(docx_path: Path) -> list[tuple[int | None, str]]:
-    """Return whole DOCX as a single logical block. DOCX has no native pages,
-    so page is None — citation uses filename only."""
+    """Ganze DOCX als einzelnen logischen Block zurückgeben. DOCX hat keine
+    nativen Seiten, daher page=None — Zitation nur nach Dateiname."""
     from docx import Document
 
     doc = Document(str(docx_path))
@@ -88,7 +89,7 @@ def extract_text_docx(docx_path: Path) -> list[tuple[int | None, str]]:
 
 
 def extract(file_path: Path) -> list[tuple[int | None, str]]:
-    """Dispatch on extension. Returns list of (page|None, text)."""
+    """Dispatch nach Erweiterung. Gibt Liste von (seite|None, text) zurück."""
     ext = file_path.suffix.lower()
     if ext == ".pdf":
         return extract_pages_pdf(file_path)
@@ -98,7 +99,7 @@ def extract(file_path: Path) -> list[tuple[int | None, str]]:
 
 
 def chunk_text(text: str, size: int, overlap: int) -> list[str]:
-    """Greedy fixed-size chunker with overlap. Size is in characters."""
+    """Gieriger Chunker fester Größe mit Überlappung. Größe in Zeichen."""
     if len(text) <= size:
         return [text] if text else []
     chunks: list[str] = []
@@ -113,10 +114,10 @@ def chunk_text(text: str, size: int, overlap: int) -> list[str]:
 
 
 def file_signature(file_path: Path) -> str:
-    """Stable signature for dedup: path + mtime + size."""
+    """Stabile Signatur für Dedup: Pfad + mtime + Größe."""
     stat = file_path.stat()
     raw = f"{file_path.resolve()}|{stat.st_mtime_ns}|{stat.st_size}".encode()
-    return hashlib.sha1(raw).hexdigest()  # nosec: dedup key, not security
+    return hashlib.sha1(raw).hexdigest()  # nosec: Dedup-Key, keine Sicherheit
 
 
 def index_one(
@@ -127,16 +128,16 @@ def index_one(
     overlap: int,
     force: bool,
 ) -> tuple[bool, str]:
-    """Index a single file. Returns (ok, message)."""
+    """Eine einzelne Datei indizieren. Gibt (ok, meldung) zurück."""
     sig = file_signature(file_path)
     if not force:
         existing = collection.get(where={"source_sig": sig})
         if existing and existing["ids"]:
-            return True, f"already indexed: {file_path.name} ({len(existing['ids'])} chunks), skip"
+            return True, f"bereits indiziert: {file_path.name} ({len(existing['ids'])} Chunks), übersprungen"
 
     blocks = extract(file_path)
     if not blocks:
-        return False, f"no extractable text in {file_path.name} (scanned PDF needs OCR)"
+        return False, f"kein extrahierbarer Text in {file_path.name} (eingescanntes PDF braucht OCR)"
 
     docs: list[str] = []
     metas: list[dict] = []
@@ -161,38 +162,38 @@ def index_one(
             ids.append(f"{sig}::{page_part}::c{j}")
 
     if not docs:
-        return False, f"all chunks empty in {file_path.name}"
+        return False, f"alle Chunks leer in {file_path.name}"
 
     vectors = embedder.encode(docs, show_progress_bar=False, convert_to_numpy=True).tolist()
     collection.upsert(ids=ids, documents=docs, metadatas=metas, embeddings=vectors)
-    return True, f"indexed {len(docs)} chunks from {file_path.name}"
+    return True, f"{len(docs)} Chunks aus {file_path.name} indiziert"
 
 
 def main() -> int:
     args = parse_args()
     path: Path = args.path
     if not path.exists():
-        print(f"error: path not found: {path}", file=sys.stderr)
+        print(f"Fehler: Pfad nicht gefunden: {path}", file=sys.stderr)
         return 1
 
     sources = find_sources(path)
     if not sources:
         print(
-            f"error: no supported files ({', '.join(sorted(SUPPORTED_EXTS))}) found under {path}",
+            f"Fehler: keine unterstützten Dateien ({', '.join(sorted(SUPPORTED_EXTS))}) unter {path} gefunden",
             file=sys.stderr,
         )
         return 1
 
-    print(f"found {len(sources)} file(s) under {path}")
+    print(f"{len(sources)} Datei(en) unter {path} gefunden")
     args.index_dir.mkdir(parents=True, exist_ok=True)
 
     client = chromadb.PersistentClient(path=str(args.index_dir))
     collection = client.get_or_create_collection(
         name=COLLECTION_NAME,
-        metadata={"description": "Kolloquium examiner passages"},
+        metadata={"description": "Kolloquiums-Prüfer-Passagen"},
     )
 
-    print(f"loading embedder: {EMBED_MODEL}")
+    print(f"lade Embedder: {EMBED_MODEL}")
     embedder = SentenceTransformer(EMBED_MODEL)
 
     ok_count = 0
@@ -207,11 +208,11 @@ def main() -> int:
             ok_count += 1
         else:
             fail_count += 1
-            if "OCR" in msg or "no extractable text" in msg:
+            if "OCR" in msg or "kein extrahierbarer Text" in msg:
                 had_text_error = True
 
     total_chunks = collection.count()
-    print(f"done: {ok_count} ok, {fail_count} failed. Total chunks in index: {total_chunks}")
+    print(f"fertig: {ok_count} ok, {fail_count} fehlgeschlagen. Chunks im Index gesamt: {total_chunks}")
     if had_text_error and fail_count == len(sources):
         return 2
     return 0 if ok_count > 0 else 1
