@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -35,8 +36,7 @@ from sentence_transformers import SentenceTransformer
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_INDEX_DIR = SCRIPT_DIR.parent / "index"
-COLLECTION_NAME = "kolloquium_passages"
-EMBED_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+from common import COLLECTION_NAME, EMBED_MODEL
 
 
 def parse_args() -> argparse.Namespace:
@@ -72,7 +72,7 @@ def main() -> int:
     embedder = SentenceTransformer(EMBED_MODEL)
     query_vec = embedder.encode([args.query], convert_to_numpy=True, normalize_embeddings=True).tolist()
 
-    where = {"source_name": args.pdf} if args.pdf else None
+    where = {"source_name": os.path.basename(args.pdf)} if args.pdf else None
     res = collection.query(
         query_embeddings=query_vec,
         n_results=args.k,

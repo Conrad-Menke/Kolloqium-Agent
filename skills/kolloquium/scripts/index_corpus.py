@@ -37,8 +37,7 @@ from sentence_transformers import SentenceTransformer
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_INDEX_DIR = SCRIPT_DIR.parent / "index"
-COLLECTION_NAME = "kolloquium_passages"
-EMBED_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+from common import COLLECTION_NAME, EMBED_MODEL
 SUPPORTED_EXTS = {".pdf", ".docx"}
 
 
@@ -132,10 +131,13 @@ def index_one(
     sig = file_signature(file_path)
     if not force:
         existing = collection.get(where={"source_sig": sig})
-        if existing and existing["ids"]:
+        if existing["ids"]:
             return True, f"bereits indiziert: {file_path.name} ({len(existing['ids'])} Chunks), übersprungen"
 
-    blocks = extract(file_path)
+    try:
+        blocks = extract(file_path)
+    except Exception as exc:
+        return False, f"Fehler beim Lesen von {file_path.name}: {exc}"
     if not blocks:
         return False, f"kein extrahierbarer Text in {file_path.name} (eingescanntes PDF braucht OCR)"
 
@@ -164,6 +166,7 @@ def index_one(
     if not docs:
         return False, f"alle Chunks leer in {file_path.name}"
 
+    collection.delete(where={"source_file": str(file_path.resolve())})
     vectors = embedder.encode(docs, show_progress_bar=False, convert_to_numpy=True, normalize_embeddings=True).tolist()
     collection.upsert(ids=ids, documents=docs, metadatas=metas, embeddings=vectors)
     return True, f"{len(docs)} Chunks aus {file_path.name} indiziert"
@@ -213,7 +216,7 @@ def main() -> int:
 
     total_chunks = collection.count()
     print(f"fertig: {ok_count} ok, {fail_count} fehlgeschlagen. Chunks im Index gesamt: {total_chunks}")
-    if had_text_error and fail_count == len(sources):
+    if had_text_error:
         return 2
     return 0 if ok_count > 0 else 1
 
